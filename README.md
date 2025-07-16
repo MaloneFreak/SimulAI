@@ -98,6 +98,15 @@ const firebaseConfig = {
 5. Click the web icon `</>`
 6. Copy the `firebaseConfig` object displayed in the **SDK setup and config** section.
 
+3. Enable Anonymous Sign-in in Firebase
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. In the left menu, click **Authentication**
+4. Go to the **Sign-in method** tab
+5. Find the **Anonymous** provider and click the pencil icon ✏️
+6. Enable the toggle and click **Save**
+
 ### Run the `SimulAI.html` File
 To enable the history feature, serve `SimulAI.html` via a local server (e.g., using the "Live Server" extension in VS Code) or host it on platforms like GitHub Pages, Vercel, or Netlify. Opening the file directly in a browser may not work due to JavaScript module security policies.
 1. Open VS Code
