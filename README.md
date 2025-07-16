@@ -79,7 +79,7 @@ Done! It will automatically open in your browser
 Or via terminal:
 1. Inside the folder where SimulAI.html is located:
 `python -m http.server 8000`
-Then go to: `http://localhost:8000/SimulAI.html`
+2. Then go to: `http://localhost:8000/SimulAI.html`
 
 ## 💻 Technologies Used
 - **HTML5**
