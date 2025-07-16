@@ -67,6 +67,37 @@ To run SimulAI locally or fork the project, you’ll need to set up a Firebase p
 2. Copy and paste the contents of the `firestore rules.txt` file from this repository. These rules ensure each user can only view and write to their own history.
 3. Click "Publish."
 
+### Configure Firebase in Your HTML
+
+1. Replace this line in your code:
+
+```
+// Original fallback line:
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
+```
+
+With your actual Firebase configuration (copied from your Firebase Console):
+
+```
+const firebaseConfig = {
+  apiKey: "your-api-key-here",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+```
+
+2. Get Your Firebase Configuration
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Open your project
+3. Click the ⚙️ gear icon → **Project Settings**
+4. Scroll down to the **Your Apps** section
+5. Click the web icon `</>`
+6. Copy the `firebaseConfig` object displayed in the **SDK setup and config** section.
+
 ### Run the `SimulAI.html` File
 To enable the history feature, serve `SimulAI.html` via a local server (e.g., using the "Live Server" extension in VS Code) or host it on platforms like GitHub Pages, Vercel, or Netlify. Opening the file directly in a browser may not work due to JavaScript module security policies.
 1. Open VS Code
