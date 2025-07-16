@@ -37,8 +37,10 @@
             border-radius: 0.25rem;
             cursor: pointer;
             font-size: 0.8rem;
+            transition: all 0.3s ease;
         }
         .copy-btn:hover { background-color: #475569; }
+        .copy-btn.copied { background-color: #059669; color: white; }
         .history-item-actions {
             display: flex;
             gap: 0.5rem;
@@ -121,38 +123,13 @@
     </div>
 
     <script type="module">
-        // --- IMPORTS DO FIREBASE ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, doc, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // --- ESTADO DA APLICAÇÃO ---
+        let questionsData = [];
+        let userAnswers = [];
+        let userId = null;
+        let historyCollectionRef = null;
+        let firebaseInitialized = false;
 
-        // --- CONFIGURAÇÃO DO FIREBASE ---
-		const firebaseConfig = {
-		apiKey: "",
-		authDomain: "",
-		projectId: "",
-		storageBucket: "",
-		messagingSenderId: "",
-		appId: "",
-		measurementId: ""
-		};
-
-		const app = initializeApp(firebaseConfig);
-		const db = getFirestore(app);
-		const auth = getAuth(app);
-
-        // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
-        async function initializeUser() {
-		  try {
-			  await signInAnonymously(auth);
-			  userId = auth.currentUser.uid;
-			  historyCollectionRef = collection(db, `simulai_history/${userId}/questions`);
-			  loadHistory(); 
-		  } catch (error) {
-			  console.error("Erro na autenticação:", error);
-		  }
-		}
-        
         // --- SELEÇÃO DOS ELEMENTOS DO DOM ---
         const processBtn = document.getElementById('process-btn');
         const aiTextInput = document.getElementById('ai-text-input');
@@ -171,20 +148,101 @@
         const subtitle = document.getElementById('subtitle');
         const quizTitle = document.getElementById('quiz-title');
 
-        // --- ESTADO DA APLICAÇÃO ---
-		let questionsData = [];
-		let userAnswers = [];
-		let userId;               
-		let historyCollectionRef; 
+        // --- FIREBASE (CONFIGURAÇÃO CORRIGIDA) ---
+        let db = null;
+        let auth = null;
 
-        // --- FUNÇÕES GLOBAIS ---
+        async function initializeFirebase() {
+            try {
+                // Configuração do Firebase - VOCÊ PRECISA PREENCHER ESTAS INFORMAÇÕES
+                const firebaseConfig = {
+                    apiKey: "sua-api-key-aqui",
+                    authDomain: "seu-auth-domain-aqui",
+                    projectId: "seu-project-id-aqui",
+                    storageBucket: "seu-storage-bucket-aqui",
+                    messagingSenderId: "seu-sender-id-aqui",
+                    appId: "seu-app-id-aqui",
+                    measurementId: "seu-measurement-id-aqui"
+                };
+
+                // Verificar se as configurações estão preenchidas
+                if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "sua-api-key-aqui") {
+                    console.warn("Firebase não configurado - funcionará apenas localmente");
+                    historyContainer.innerHTML = '<p class="text-center text-slate-500">Histórico indisponível - Firebase não configurado</p>';
+                    return;
+                }
+
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, collection, addDoc, query, onSnapshot, doc, getDoc, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                await signInAnonymously(auth);
+                userId = auth.currentUser.uid;
+                historyCollectionRef = collection(db, `simulai_history/${userId}/questions`);
+                firebaseInitialized = true;
+                
+                loadHistory();
+                console.log("Firebase inicializado com sucesso!");
+            } catch (error) {
+                console.error("Erro ao inicializar Firebase:", error);
+                historyContainer.innerHTML = '<p class="text-center text-slate-500">Histórico indisponível - erro na configuração</p>';
+            }
+        }
+
+        // --- FUNÇÃO COPYPROMPТ CORRIGIDA ---
         window.copyPrompt = function() {
             const promptText = document.getElementById('prompt-text').innerText;
-            navigator.clipboard.writeText(promptText).then(() => {
-                const copyButton = document.querySelector('.copy-btn');
-                copyButton.textContent = 'Copiado!';
-                setTimeout(() => { copyButton.textContent = 'Copiar'; }, 2000);
-            });
+            const copyButton = document.querySelector('.copy-btn');
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    copyButton.textContent = 'Copiado!';
+                    copyButton.classList.add('copied');
+                    setTimeout(() => {
+                        copyButton.textContent = 'Copiar';
+                        copyButton.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Erro ao copiar:', err);
+                    fallbackCopyText(promptText, copyButton);
+                });
+            } else {
+                fallbackCopyText(promptText, copyButton);
+            }
+        };
+
+        // Função fallback para copiar texto
+        function fallbackCopyText(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Erro ao copiar texto:', err);
+                button.textContent = 'Erro!';
+                setTimeout(() => {
+                    button.textContent = 'Copiar';
+                }, 2000);
+            }
+            
+            document.body.removeChild(textArea);
         }
 
         function showView(viewToShow) {
@@ -193,27 +251,33 @@
             viewToShow.classList.add('fade-in');
         }
 
-        // --- LÓGICA DO SIMULADO ---
+        // --- LÓGICA DO SIMULADO CORRIGIDA ---
         function processAndStartQuiz() {
-            let text = aiTextInput.value.trim();
+            const text = aiTextInput.value.trim();
+            
             if (!text) {
                 alert('Por favor, cole o texto gerado pela IA na área indicada.');
                 return;
             }
 
-            const questionBlocks = text.split('---');
-            questionsData = questionBlocks.map((block, index) => parseQuestionBlock(block, index)).filter(q => q !== null);
+            try {
+                const questionBlocks = text.split('---');
+                questionsData = questionBlocks.map((block, index) => parseQuestionBlock(block, index)).filter(q => q !== null);
 
-            if (questionsData.length === 0) {
-                alert('Nenhuma questão válida foi encontrada. Verifique se o texto da IA segue o formato solicitado.');
-                return;
+                if (questionsData.length === 0) {
+                    alert('Nenhuma questão válida foi encontrada. Verifique se o texto da IA segue o formato solicitado.');
+                    return;
+                }
+                
+                displayQuiz(questionsData);
+            } catch (error) {
+                console.error('Erro ao processar questões:', error);
+                alert('Erro ao processar as questões. Verifique o formato do texto.');
             }
-            displayQuiz(questionsData);
         }
         
         function parseQuestionBlock(block, index) {
             try {
-                // CORREÇÃO: A remoção de ### agora é global.
                 const cleanedBlock = block.replace(/[*\`>\\\[\]]/g, '').replace(/###\s*/g, '').trim();
                 if (cleanedBlock.length < 20) return null;
 
@@ -251,7 +315,7 @@
                 
                 return { question, options, correctAnswer, calculation };
             } catch (error) {
-                console.error(`Erro fatal ao processar o bloco ${index + 1}:`, error);
+                console.error(`Erro ao processar o bloco ${index + 1}:`, error);
                 return null;
             }
         }
@@ -281,20 +345,25 @@
                 quizContainer.appendChild(questionElement);
             });
             
-            // Prepara a visualização do quiz
             resultsSection.classList.add('hidden');
             evaluationContainer.classList.remove('hidden');
             showView(quizAndResultsSection);
         }
 
         async function evaluateQuiz() {
-            const allAnswered = Array.from({ length: questionsData.length }, (_, i) => document.querySelector(`input[name="question-${i}"]:checked`)).every(Boolean);
+            const allAnswered = Array.from({ length: questionsData.length }, (_, i) => 
+                document.querySelector(`input[name="question-${i}"]:checked`)
+            ).every(Boolean);
+            
             if (!allAnswered) {
                 alert("Por favor, responda todas as questões antes de avaliar.");
                 return;
             }
             
-            userAnswers = questionsData.map((_, index) => document.querySelector(`input[name="question-${index}"]:checked`).value);
+            userAnswers = questionsData.map((_, index) => 
+                document.querySelector(`input[name="question-${index}"]:checked`).value
+            );
+            
             let correctAnswersCount = 0;
 
             questionsData.forEach((q, index) => {
@@ -340,58 +409,80 @@
                 <p class="text-lg">Você acertou <span class="font-bold text-blue-600">${correctAnswersCount}</span> de <span class="font-bold">${questionsData.length}</span> questões.</p>
                 <p class="text-4xl font-bold mt-3 ${score >= 60 ? 'text-green-600' : 'text-red-600'}">${score.toFixed(0)}%</p>`;
             
-            // CORREÇÃO: Mostra a seção de resultados e esconde o botão de avaliação
             resultsSection.classList.remove('hidden');
             evaluationContainer.classList.add('hidden');
 
-            // Salvar no histórico
-            const historyEntry = {
-                title: questionsData[0].question.substring(0, 50) + '...',
-                timestamp: new Date(),
-                score: score.toFixed(0),
-                totalQuestions: questionsData.length,
-                correctAnswers: correctAnswersCount,
-                questionsData: JSON.stringify(questionsData)
-            };
-            await addDoc(historyCollectionRef, historyEntry);
+            // Salvar no histórico (apenas se Firebase estiver configurado)
+            if (firebaseInitialized && historyCollectionRef) {
+                try {
+                    const { addDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                    const historyEntry = {
+                        title: questionsData[0].question.substring(0, 50) + '...',
+                        timestamp: new Date(),
+                        score: score.toFixed(0),
+                        totalQuestions: questionsData.length,
+                        correctAnswers: correctAnswersCount,
+                        questionsData: JSON.stringify(questionsData)
+                    };
+                    await addDoc(historyCollectionRef, historyEntry);
+                } catch (error) {
+                    console.error("Erro ao salvar no histórico:", error);
+                }
+            }
         }
 
         // --- LÓGICA DO HISTÓRICO ---
         function loadHistory() {
-            if (!historyCollectionRef) return;
-            const q = query(historyCollectionRef, orderBy("timestamp", "desc"), limit(50));
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    historyContainer.innerHTML = '<p class="text-center text-slate-500">Nenhum simulado no histórico ainda.</p>';
-                    return;
-                }
-                historyContainer.innerHTML = '';
-                snapshot.docs.forEach(docSnap => {
-                    const item = docSnap.data();
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center';
-                    itemEl.innerHTML = `
-                        <div>
-                            <p class="font-semibold">${item.title}</p>
-                            <p class="text-sm text-slate-500">${new Date(item.timestamp.seconds * 1000).toLocaleDateString('pt-BR')} - Acertou ${item.correctAnswers}/${item.totalQuestions} (${item.score}%)</p>
-                        </div>
-                        <div class="history-item-actions">
-                            <button data-id="${docSnap.id}" class="retake-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-semibold hover:bg-blue-200">Refazer</button>
-                        </div>`;
-                    historyContainer.appendChild(itemEl);
+            if (!firebaseInitialized || !historyCollectionRef) {
+                historyContainer.innerHTML = '<p class="text-center text-slate-500">Histórico indisponível - Firebase não configurado</p>';
+                return;
+            }
+
+            try {
+                import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js").then(({ query, onSnapshot, orderBy, limit }) => {
+                    const q = query(historyCollectionRef, orderBy("timestamp", "desc"), limit(50));
+                    onSnapshot(q, (snapshot) => {
+                        if (snapshot.empty) {
+                            historyContainer.innerHTML = '<p class="text-center text-slate-500">Nenhum simulado no histórico ainda.</p>';
+                            return;
+                        }
+                        historyContainer.innerHTML = '';
+                        snapshot.docs.forEach(docSnap => {
+                            const item = docSnap.data();
+                            const itemEl = document.createElement('div');
+                            itemEl.className = 'bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center';
+                            itemEl.innerHTML = `
+                                <div>
+                                    <p class="font-semibold">${item.title}</p>
+                                    <p class="text-sm text-slate-500">${new Date(item.timestamp.seconds * 1000).toLocaleDateString('pt-BR')} - Acertou ${item.correctAnswers}/${item.totalQuestions} (${item.score}%)</p>
+                                </div>
+                                <div class="history-item-actions">
+                                    <button data-id="${docSnap.id}" class="retake-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-semibold hover:bg-blue-200">Refazer</button>
+                                </div>`;
+                            historyContainer.appendChild(itemEl);
+                        });
+                    });
                 });
-            });
+            } catch (error) {
+                console.error("Erro ao carregar histórico:", error);
+                historyContainer.innerHTML = '<p class="text-center text-slate-500">Erro ao carregar histórico</p>';
+            }
         }
 
         historyContainer.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('retake-btn')) {
-                const docId = e.target.dataset.id;
-                const docRef = doc(historyCollectionRef, docId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const historyItem = docSnap.data();
-                    const quizData = JSON.parse(historyItem.questionsData);
-                    displayQuiz(quizData, `Refazendo: ${historyItem.title}`);
+            if (e.target.classList.contains('retake-btn') && firebaseInitialized) {
+                try {
+                    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                    const docId = e.target.dataset.id;
+                    const docRef = doc(historyCollectionRef, docId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const historyItem = docSnap.data();
+                        const quizData = JSON.parse(historyItem.questionsData);
+                        displayQuiz(quizData, `Refazendo: ${historyItem.title}`);
+                    }
+                } catch (error) {
+                    console.error("Erro ao refazer simulado:", error);
                 }
             }
         });
@@ -410,8 +501,21 @@
         });
 
         // --- INICIALIZAÇÃO ---
-        initializeUser();
-        showView(inputSection);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            showView(inputSection);
+        });
+
+        // Inicializar mesmo se DOM já estiver carregado
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeFirebase();
+                showView(inputSection);
+            });
+        } else {
+            initializeFirebase();
+            showView(inputSection);
+        }
 
     </script>
 </body>
