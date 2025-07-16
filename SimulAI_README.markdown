@@ -5,7 +5,6 @@ SimulAI is an innovative web tool that transforms AI-generated text into interac
 
 With SimulAI, you can request any AI (GPT, Gemini, Claude, etc.) to create questions on a specific topic, and with a simple "copy and paste," the tool generates a mock test that can be answered and evaluated instantly, providing feedback and explanations for each answer.
 
-(Suggestion: Record a quick GIF showcasing the app's flow and replace this link!)
 
 ## ✨ Features
 - **Intelligent Text Analysis**: Copy and paste text directly from the AI. SimulAI handles the rest.
