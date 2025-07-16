@@ -70,14 +70,6 @@ To run SimulAI locally or fork the project, you’ll need to set up a Firebase p
 ### Configure Firebase in Your HTML
 
 1. Replace this line in your code:
-
-```
-// Original fallback line:
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
-```
-
-With your actual Firebase configuration (copied from your Firebase Console):
-
 ```
 const firebaseConfig = {
   apiKey: "your-api-key-here",
@@ -88,7 +80,7 @@ const firebaseConfig = {
   appId: "your-app-id"
 };
 ```
-
+With your actual Firebase configuration (copied from your Firebase Console):
 ### Get Your Firebase Configuration
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
