@@ -89,7 +89,7 @@ const firebaseConfig = {
 };
 ```
 
-2. Get Your Firebase Configuration
+### Get Your Firebase Configuration
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
 2. Open your project
@@ -98,7 +98,7 @@ const firebaseConfig = {
 5. Click the web icon `</>`
 6. Copy the `firebaseConfig` object displayed in the **SDK setup and config** section.
 
-3. Enable Anonymous Sign-in in Firebase
+### Enable Anonymous Sign-in in Firebase
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
 2. Select your project
