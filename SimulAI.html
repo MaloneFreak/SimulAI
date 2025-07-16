@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimulAI - Simulador de Questões</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .prompt-box {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #334155;
+            color: #cbd5e1;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .copy-btn:hover { background-color: #475569; }
+        .history-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600">SimulAI 🤖</h1>
+            <p id="subtitle" class="text-slate-600 mt-2">Seus simulados, a um clique de distância!</p>
+        </header>
+        
+        <div class="text-center mb-8 border-b pb-4">
+             <button id="new-quiz-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Novo Simulado</button>
+             <button id="history-btn" class="bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-300 transition">Histórico</button>
+        </div>
+
+        <main>
+            <!-- Seção de Entrada de Texto -->
+            <div id="input-section" class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-2 text-slate-700">1. Use este "Prompt Mágico" na sua IA preferida:</label>
+                    <div class="prompt-box">
+                        <button class="copy-btn" onclick="copyPrompt()">Copiar</button>
+                        <p id="prompt-text">Crie X questões sobre [SEU TEMA AQUI]. Para CADA questão (mesmo que seja uma sub-pergunta como "Pergunta 1", "Pergunta 2"), siga este formato EXATO:
+1. Comece com o texto da questão (pode incluir um enunciado antes).
+2. Liste as alternativas (A, B, C, D).
+3. Marque a resposta correta com o emoji ✅ antes da letra (ex: ✅ C) ...).
+4. Forneça uma justificativa começando com "💡 Justificativa:".
+5. Não adicione números de questão (como 1., 2., etc.) no início, apenas escreva a questão.
+6. **IMPORTANTE: Separe CADA questão com "---" em uma linha própria.**</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="ai-text-input" class="block text-lg font-semibold mb-2 text-slate-700">2. Cole o resultado da IA aqui:</label>
+                    <textarea id="ai-text-input" rows="12" class="w-full mt-2 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Cole o texto gerado pela IA que segue o formato acima..."></textarea>
+                </div>
+                <button id="process-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Analisar e Simular Prova
+                </button>
+            </div>
+
+            <!-- Seção do Simulado e Resultados Combinados -->
+            <div id="quiz-and-results-section" class="mt-8 hidden">
+                <div id="results-section" class="mb-8 hidden">
+                     <div id="results-summary" class="text-center bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-6"></div>
+                    <div class="text-center">
+                        <button id="restart-btn" class="bg-slate-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
+                            Fazer Novo Simulado
+                        </button>
+                    </div>
+                </div>
+                <h2 id="quiz-title" class="text-2xl font-bold text-center mb-6">Resolva as Questões</h2>
+                <div id="quiz-container"></div>
+                <div id="evaluation-container" class="mt-8 text-center">
+                    <button id="evaluate-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        AvaliaAI ✨
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Seção do Histórico -->
+            <div id="history-section" class="mt-8 hidden">
+                 <h2 class="text-2xl font-bold text-center mb-6">Histórico de Simulados</h2>
+                 <div id="history-container" class="space-y-4">
+                    <!-- Itens do histórico serão inseridos aqui -->
+                 </div>
+            </div>
+
+        </main>
+        
+        <footer class="text-center mt-12 text-slate-500 text-sm">
+            <p>Criado com base na ideia de MaloneFreak. Desenvolvido pelo Gemini.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        // --- IMPORTS DO FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, doc, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+		const firebaseConfig = {
+		apiKey: "",
+		authDomain: "",
+		projectId: "",
+		storageBucket: "",
+		messagingSenderId: "",
+		appId: "",
+		measurementId: ""
+		};
+
+		const app = initializeApp(firebaseConfig);
+		const db = getFirestore(app);
+		const auth = getAuth(app);
+
+        // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
+        async function initializeUser() {
+		  try {
+			  await signInAnonymously(auth);
+			  userId = auth.currentUser.uid;
+			  historyCollectionRef = collection(db, `simulai_history/${userId}/questions`);
+			  loadHistory(); 
+		  } catch (error) {
+			  console.error("Erro na autenticação:", error);
+		  }
+		}
+        
+        // --- SELEÇÃO DOS ELEMENTOS DO DOM ---
+        const processBtn = document.getElementById('process-btn');
+        const aiTextInput = document.getElementById('ai-text-input');
+        const inputSection = document.getElementById('input-section');
+        const quizAndResultsSection = document.getElementById('quiz-and-results-section');
+        const quizContainer = document.getElementById('quiz-container');
+        const evaluateBtn = document.getElementById('evaluate-btn');
+        const evaluationContainer = document.getElementById('evaluation-container');
+        const resultsSection = document.getElementById('results-section');
+        const resultsSummary = document.getElementById('results-summary');
+        const restartBtn = document.getElementById('restart-btn');
+        const newQuizBtn = document.getElementById('new-quiz-btn');
+        const historyBtn = document.getElementById('history-btn');
+        const historySection = document.getElementById('history-section');
+        const historyContainer = document.getElementById('history-container');
+        const subtitle = document.getElementById('subtitle');
+        const quizTitle = document.getElementById('quiz-title');
+
+        // --- ESTADO DA APLICAÇÃO ---
+		let questionsData = [];
+		let userAnswers = [];
+		let userId;               
+		let historyCollectionRef; 
+
+        // --- FUNÇÕES GLOBAIS ---
+        window.copyPrompt = function() {
+            const promptText = document.getElementById('prompt-text').innerText;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const copyButton = document.querySelector('.copy-btn');
+                copyButton.textContent = 'Copiado!';
+                setTimeout(() => { copyButton.textContent = 'Copiar'; }, 2000);
+            });
+        }
+
+        function showView(viewToShow) {
+            [inputSection, quizAndResultsSection, historySection].forEach(view => view.classList.add('hidden'));
+            viewToShow.classList.remove('hidden');
+            viewToShow.classList.add('fade-in');
+        }
+
+        // --- LÓGICA DO SIMULADO ---
+        function processAndStartQuiz() {
+            let text = aiTextInput.value.trim();
+            if (!text) {
+                alert('Por favor, cole o texto gerado pela IA na área indicada.');
+                return;
+            }
+
+            const questionBlocks = text.split('---');
+            questionsData = questionBlocks.map((block, index) => parseQuestionBlock(block, index)).filter(q => q !== null);
+
+            if (questionsData.length === 0) {
+                alert('Nenhuma questão válida foi encontrada. Verifique se o texto da IA segue o formato solicitado.');
+                return;
+            }
+            displayQuiz(questionsData);
+        }
+        
+        function parseQuestionBlock(block, index) {
+            try {
+                // CORREÇÃO: A remoção de ### agora é global.
+                const cleanedBlock = block.replace(/[*\`>\\\[\]]/g, '').replace(/###\s*/g, '').trim();
+                if (cleanedBlock.length < 20) return null;
+
+                const calcMarker = /(?:💡\s*Justificativa:|Cálculo:)/i;
+                const calcMatch = cleanedBlock.match(calcMarker);
+                
+                let questionAndOptionsBlock = cleanedBlock;
+                let calculation = "Nenhuma justificativa encontrada.";
+
+                if (calcMatch) {
+                    questionAndOptionsBlock = cleanedBlock.substring(0, calcMatch.index);
+                    calculation = cleanedBlock.substring(calcMatch.index + calcMatch[0].length).trim();
+                }
+
+                const answerMarker = /✅\s*([A-Z])\)/i;
+                const correctAnswerMatch = questionAndOptionsBlock.match(answerMarker);
+                if (!correctAnswerMatch) return null;
+                const correctAnswer = correctAnswerMatch[1].toLowerCase();
+                
+                const optionRegex = /^\s*(?:✅\s*)?([A-Z])\)\s*(.*)/gm;
+                let options = [];
+                let match;
+                while ((match = optionRegex.exec(questionAndOptionsBlock)) !== null) {
+                    options.push({ id: match[1].toLowerCase(), text: match[2].trim() });
+                }
+                if (options.length === 0) return null;
+
+                const firstOptionRegexForSearch = /^\s*(?:✅\s*)?[A-Z]\)/m;
+                const firstOptionIndex = questionAndOptionsBlock.search(firstOptionRegexForSearch);
+                if (firstOptionIndex === -1) return null;
+
+                let question = questionAndOptionsBlock.substring(0, firstOptionIndex).trim();
+                question = question.replace(/✅ Questão \d[.\d]* –/gi, '').replace(/Enunciado:|Dados:|Alternativas:/gi, '').trim();
+                if (!question) return null;
+                
+                return { question, options, correctAnswer, calculation };
+            } catch (error) {
+                console.error(`Erro fatal ao processar o bloco ${index + 1}:`, error);
+                return null;
+            }
+        }
+
+        function displayQuiz(quizData, title = "Resolva as Questões") {
+            questionsData = quizData;
+            quizTitle.textContent = title;
+            quizContainer.innerHTML = '';
+            
+            quizData.forEach((q, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-6 fade-in';
+                questionElement.innerHTML = `
+                    <p class="font-semibold text-lg mb-4">${index + 1}. ${q.question.replace(/\n/g, '<br>')}</p>
+                    <div class="options-container">${q.options.map(opt => `
+                        <div class="mt-2">
+                            <label class="flex items-center p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400">
+                                <input type="radio" name="question-${index}" value="${opt.id}" class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300">
+                                <span class="text-slate-700">${opt.id.toUpperCase()}) ${opt.text}</span>
+                            </label>
+                        </div>`).join('')}
+                    </div>
+                    <div id="calc-${index}" class="calculation-container mt-4 p-4 bg-slate-100 rounded-lg border-l-4 border-slate-400 text-slate-700 hidden">
+                        <h4 class="font-bold mb-2">Cálculo e Explicação:</h4>
+                        <p>${q.calculation.replace(/\n/g, '<br>')}</p>
+                    </div>`;
+                quizContainer.appendChild(questionElement);
+            });
+            
+            // Prepara a visualização do quiz
+            resultsSection.classList.add('hidden');
+            evaluationContainer.classList.remove('hidden');
+            showView(quizAndResultsSection);
+        }
+
+        async function evaluateQuiz() {
+            const allAnswered = Array.from({ length: questionsData.length }, (_, i) => document.querySelector(`input[name="question-${i}"]:checked`)).every(Boolean);
+            if (!allAnswered) {
+                alert("Por favor, responda todas as questões antes de avaliar.");
+                return;
+            }
+            
+            userAnswers = questionsData.map((_, index) => document.querySelector(`input[name="question-${index}"]:checked`).value);
+            let correctAnswersCount = 0;
+
+            questionsData.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const optionsLabels = quizContainer.querySelectorAll(`input[name="question-${index}"]`);
+                
+                optionsLabels.forEach(radio => {
+                    const label = radio.parentElement;
+                    radio.disabled = true;
+                    label.classList.remove('hover:bg-slate-100');
+                    label.classList.add('cursor-not-allowed');
+
+                    if (radio.value === q.correctAnswer) {
+                        label.classList.remove('border-slate-200');
+                        label.classList.add('bg-green-50', 'border-green-400', 'font-semibold');
+                    }
+                });
+
+                if (userAnswer === q.correctAnswer) {
+                    correctAnswersCount++;
+                    const correctLabel = document.querySelector(`input[name="question-${index}"][value="${userAnswer}"]`).parentElement;
+                    correctLabel.classList.add('!bg-green-100', '!border-green-500');
+                    
+                    const showCalcBtn = document.createElement('button');
+                    showCalcBtn.className = 'text-sm text-green-700 font-semibold mt-3 hover:underline';
+                    showCalcBtn.textContent = 'Mostrar cálculo';
+                    showCalcBtn.onclick = () => {
+                        document.getElementById(`calc-${index}`).classList.toggle('hidden');
+                        showCalcBtn.textContent = document.getElementById(`calc-${index}`).classList.contains('hidden') ? 'Mostrar cálculo' : 'Ocultar cálculo';
+                    };
+                    correctLabel.parentElement.appendChild(showCalcBtn);
+                } else {
+                    const incorrectLabel = document.querySelector(`input[name="question-${index}"][value="${userAnswer}"]`).parentElement;
+                    incorrectLabel.classList.remove('border-blue-50', 'border-blue-400');
+                    incorrectLabel.classList.add('!bg-red-100', '!border-red-500');
+                    document.getElementById(`calc-${index}`).classList.remove('hidden');
+                }
+            });
+
+            const score = (correctAnswersCount / questionsData.length) * 100;
+            resultsSummary.innerHTML = `
+                <h3 class="text-2xl font-bold mb-2">Resultado Final</h3>
+                <p class="text-lg">Você acertou <span class="font-bold text-blue-600">${correctAnswersCount}</span> de <span class="font-bold">${questionsData.length}</span> questões.</p>
+                <p class="text-4xl font-bold mt-3 ${score >= 60 ? 'text-green-600' : 'text-red-600'}">${score.toFixed(0)}%</p>`;
+            
+            // CORREÇÃO: Mostra a seção de resultados e esconde o botão de avaliação
+            resultsSection.classList.remove('hidden');
+            evaluationContainer.classList.add('hidden');
+
+            // Salvar no histórico
+            const historyEntry = {
+                title: questionsData[0].question.substring(0, 50) + '...',
+                timestamp: new Date(),
+                score: score.toFixed(0),
+                totalQuestions: questionsData.length,
+                correctAnswers: correctAnswersCount,
+                questionsData: JSON.stringify(questionsData)
+            };
+            await addDoc(historyCollectionRef, historyEntry);
+        }
+
+        // --- LÓGICA DO HISTÓRICO ---
+        function loadHistory() {
+            if (!historyCollectionRef) return;
+            const q = query(historyCollectionRef, orderBy("timestamp", "desc"), limit(50));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    historyContainer.innerHTML = '<p class="text-center text-slate-500">Nenhum simulado no histórico ainda.</p>';
+                    return;
+                }
+                historyContainer.innerHTML = '';
+                snapshot.docs.forEach(docSnap => {
+                    const item = docSnap.data();
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center';
+                    itemEl.innerHTML = `
+                        <div>
+                            <p class="font-semibold">${item.title}</p>
+                            <p class="text-sm text-slate-500">${new Date(item.timestamp.seconds * 1000).toLocaleDateString('pt-BR')} - Acertou ${item.correctAnswers}/${item.totalQuestions} (${item.score}%)</p>
+                        </div>
+                        <div class="history-item-actions">
+                            <button data-id="${docSnap.id}" class="retake-btn bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-semibold hover:bg-blue-200">Refazer</button>
+                        </div>`;
+                    historyContainer.appendChild(itemEl);
+                });
+            });
+        }
+
+        historyContainer.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('retake-btn')) {
+                const docId = e.target.dataset.id;
+                const docRef = doc(historyCollectionRef, docId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const historyItem = docSnap.data();
+                    const quizData = JSON.parse(historyItem.questionsData);
+                    displayQuiz(quizData, `Refazendo: ${historyItem.title}`);
+                }
+            }
+        });
+
+        // --- EVENT LISTENERS ---
+        processBtn.addEventListener('click', processAndStartQuiz);
+        evaluateBtn.addEventListener('click', evaluateQuiz);
+        restartBtn.addEventListener('click', () => showView(inputSection));
+        newQuizBtn.addEventListener('click', () => {
+            subtitle.textContent = "Seus simulados, agora em um clique de distância!";
+            showView(inputSection);
+        });
+        historyBtn.addEventListener('click', () => {
+            subtitle.textContent = "Revise seus simulados e acompanhe seu progresso.";
+            showView(historySection);
+        });
+
+        // --- INICIALIZAÇÃO ---
+        initializeUser();
+        showView(inputSection);
+
+    </script>
+</body>
+</html>
