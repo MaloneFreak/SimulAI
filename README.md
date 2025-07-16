@@ -67,7 +67,7 @@ To run SimulAI locally or fork the project, you’ll need to set up a Firebase p
 2. Copy and paste the contents of the `firestore rules.txt` file from this repository. These rules ensure each user can only view and write to their own history.
 3. Click "Publish."
 
-### Run the `index.html` File
+### Run the `SimulAI.html` File
 To enable the history feature, serve `SimulAI.html` via a local server (e.g., using the "Live Server" extension in VS Code) or host it on platforms like GitHub Pages, Vercel, or Netlify. Opening the file directly in a browser may not work due to JavaScript module security policies.
 1. Open VS Code
 2. Install the "Live Server" extension
