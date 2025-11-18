@@ -1,7 +1,7 @@
 # SimulAI 🤖
 
 ## About the Project
-SimulAI is an innovative, **offline-first** web tool that transforms AI-generated text into interactive mock tests. Conceived by Pedro, it addresses a common challenge for students: the difficulty of quickly and efficiently creating and grading study exams.
+SimulAI is an innovative, **offline-first** web tool that transforms AI-generated text into interactive mock tests. Conceived by MaloneFreak, it addresses a common challenge for students: the difficulty of quickly and efficiently creating and grading study exams.
 
 With SimulAI v1.2, you can request any AI (GPT, Gemini, Claude, DeepSeek) to create questions on a specific topic, and with a simple "copy and paste," the tool generates a mock test that can be answered and evaluated instantly.
 
