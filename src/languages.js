@@ -44,6 +44,7 @@ let content = {
         "step_1": "1. Prompt (Copie e cole na IA)",
         "copy_prompt": "Copiar",
         "prompt_text": "Crie 5 questões sobre [TEMA].\n" +
+            "Comece com uma linha no formato \"Tema: <nome curto do tema>\".\n" +
             "Formato para CADA questão:\n" +
             "\n" +
             "Questão 1: [Enunciado]\n" +
@@ -83,6 +84,8 @@ let content = {
         "questionRegex": /^(?:Questão\s+\d+|Question\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Gabarito|Resposta|Letra).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Justificativa:|Explicação:|Comentário:)([\s\S]*)/i,
+        "themeRegex": /^(?:Tema|Assunto|Tópico|Topico)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:quest(?:ões|oes|ão|ao)|simulado|prova|perguntas?)\s+(?:sobre|a respeito de|acerca de)\s+(.+)$/i,
 
 
         "download_prefix": "simulai_historico_",
@@ -104,6 +107,7 @@ let content = {
         "step_1": "1. Prompt (Copy and paste into the AI)",
         "copy_prompt": "Copy",
         "prompt_text": "Create 5 questions about [TOPIC].\n" +
+            "Start with one line in the form \"Theme: <short topic name>\".\n" +
             "Format for EACH question:\n" +
             "\n" +
             "Question 1: [Statement]\n" +
@@ -143,6 +147,8 @@ let content = {
         "questionRegex": /^(?:Question\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Answer|Correct Option|Option).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Explanation:|Comment:)([\s\S]*)/i,
+        "themeRegex": /^(?:Theme|Topic|Subject)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:questions?|quiz|test|exam)\s+(?:about|regarding|covering|on the topic of|on)\s+(.+)$/i,
 
         "download_prefix": "simulai_history_",
         "alerts": {
@@ -165,6 +171,7 @@ let content = {
         "step_1": "1. Prompt (Kopieren und in die KI einfügen)",
         "copy_prompt": "Kopieren",
         "prompt_text": "Erstelle 5 Fragen zu [THEMA].\n" +
+            "Beginne mit einer Zeile im Format \"Thema: <kurzer Themenname>\".\n" +
             "Format für JEDE Frage:\n" +
             "\n" +
             "Frage 1: [Aussage]\n" +
@@ -203,6 +210,8 @@ let content = {
         "questionRegex": /^(?:Frage\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Antwort|Richtige Antwort|Option).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Begründung:|Kommentar:)([\s\S]*)/i,
+        "themeRegex": /^(?:Thema|Themengebiet|Fachgebiet)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:Fragen?|Quiz|Test|Prüfung)\s+(?:zu|zum|zur|über|rund um)\s+(.+)$/i,
 
         "download_prefix": "simulai_verlauf_",
         "alerts": {
@@ -232,14 +241,10 @@ let contentDynamic = {
         history_saved: "Simulado salvo no histórico! ID: {id}",
         history_saved_completed: "Simulado salvo no histórico com {percentage}%! ",
         log_normalize: "🧹 Normalizando texto...",
-        log_parse_block: "📝 Processando bloco {index}...",
-        log_parse_question: "❓ Extraindo pergunta...",
-        log_parse_solution: "💡 Extraindo solução...",
         log_save_history: "💾 Salvando simulado no histórico...",
         log_delete_history: "🗑️ Deletando simulado {id} do histórico...",
         log_clear_history: "🧹 Limpando todo o histórico...",
         history_theme_unknown: "Tema não identificado",
-        quiz_question_identifier: "Questão",
         history_theme: "Tema",
         history_date: "Data",
         history_at: "às",
@@ -267,14 +272,10 @@ let contentDynamic = {
         history_saved: "Simulation saved to history! ID: {id}",
         history_saved_completed: "Simulation saved to history with {percentage}%!",
         log_normalize: "🧹 Normalizing text...",
-        log_parse_block: "📝 Processing block {index}...",
-        log_parse_question: "❓ Extracting question...",
-        log_parse_solution: "💡 Extracting solution...",
         log_save_history: "💾 Saving simulation to history...",
         log_delete_history: "🗑️ Deleting simulation {id} from history...",
         log_clear_history: "🧹 Clearing all history...",
         history_theme_unknown: "Topic not identified",
-        quiz_question_identifier: "Question",
         history_theme: "Topic",
         history_date: "Date",
         history_at: "at",
@@ -301,14 +302,10 @@ let contentDynamic = {
         history_saved: "Simulation im Verlauf gespeichert! ID: {id}",
         history_saved_completed: "Simulation im Verlauf gespeichert mit {percentage}%!",
         log_normalize: "🧹 Text wird normalisiert...",
-        log_parse_block: "📝 Block {index} wird verarbeitet...",
-        log_parse_question: "❓ Frage wird extrahiert...",
-        log_parse_solution: "💡 Lösung wird extrahiert...",
         log_save_history: "💾 Simulation wird im Verlauf gespeichert...",
         log_delete_history: "🗑️ Simulation {id} wird aus dem Verlauf gelöscht...",
         log_clear_history: "🧹 Gesamter Verlauf wird gelöscht...",
         history_theme_unknown: "Thema nicht erkannt",
-        quiz_question_identifier: "Frage",
         history_theme: "Thema",
         history_date: "Datum",
         history_at: "um",
