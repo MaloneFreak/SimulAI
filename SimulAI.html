@@ -5,642 +5,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimulAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./src/script.js" defer></script>
+    <script src="./src/languages.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-    
-    <script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap"
+          rel="stylesheet">
+
+    <script defer>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            startup: { typeset: false }
+            tex: {inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']]},
+            startup: {typeset: false},
         };
+        document.addEventListener("DOMContentLoaded", () => {
+            updateTexts();
+            const selector = document.getElementById('language-selector');
+            if (selector) selector.value = SettingsManager.getLanguage();
+        });
     </script>
     <script id="mathjax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .prompt-box { background: #1e293b; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
-        .history-item { transition: all 0.2s ease; }
-        .history-item:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .prompt-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .history-item {
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #2563eb;
+            color: #2563eb;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-slate-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl flex-grow">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-blue-800 mb-2">SimulAI</h1>
-            <p class="text-slate-500">Crie Simulados e teste seu aprendizado!</p>
-        </div>
+<div class="absolute top-4 left-4">
+    <select
+            id="language-selector"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            onchange="switchLanguage(this.value)"
+    >
+        <option value="en-EN">EN</option>
+        <option value="pt-BR">PT</option>
+        <option value="de-DE">DE</option>
+    </select>
+</div>
 
-        <!-- TABS -->
-        <div class="bg-white rounded-t-2xl shadow-lg border-b border-slate-200">
-            <div class="flex">
-                <button id="tab-create" onclick="switchTab('create')" class="tab-active flex-1 py-4 px-6 font-semibold text-slate-600 hover:text-blue-600 transition">
-                    📝 Criar Simulado
-                </button>
-                <button id="tab-history" onclick="switchTab('history')" class="flex-1 py-4 px-6 font-semibold text-slate-600 hover:text-blue-600 transition">
-                    📚 Histórico
-                    <span id="history-count" class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">0</span>
-                </button>
-            </div>
-        </div>
+<div class="container mx-auto p-4 md:p-8 max-w-4xl flex-grow">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-blue-800 mb-2" id="app-title"></h1>
+        <p class="text-slate-500" id="app-description"></p>
+    </div>
 
-        <!-- INPUT TAB -->
-        <div id="input-view" class="bg-white rounded-b-2xl p-6 shadow-lg border border-slate-200 space-y-6">
-            <div>
-                <label class="font-bold text-slate-700 flex justify-between mb-2">
-                    <span>1. Prompt (Copie e cole na IA):</span>
-                    <button onclick="copyPrompt()" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100">Copiar</button>
-                </label>
-                <div class="prompt-box p-4 rounded-lg border border-slate-600" id="prompt-text">Crie 5 questões sobre [TEMA].
-Formato para CADA questão:
-
-Questão 1: [Enunciado]
-A) [Texto]
-B) [Texto]
-C) [Texto]
-D) [Texto]
-✅ [Letra Correta]
-💡 Justificativa: [Explicação]
----</div>
-            </div>
-
-            <div>
-                <label class="block font-bold text-slate-700 mb-2">2. Cole a resposta da IA:</label>
-                <textarea id="ai-input" rows="10" class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 transition font-mono text-sm" placeholder="Cole aqui o texto..."></textarea>
-            </div>
-
-            <button id="btn-generate" class="w-full bg-blue-700 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-800 transition shadow-lg">
-                GERAR SIMULADO
+    <!-- TABS -->
+    <div class="bg-white rounded-t-2xl shadow-lg border-b border-slate-200">
+        <div class="flex">
+            <button id="tab-create" onclick="switchTab('create')"
+                    class="tab-active flex-1 py-4 px-6 font-semibold text-slate-600 hover:text-blue-600 transition">
+            </button>
+            <button id="tab-history" onclick="switchTab('history')"
+                    class="flex-1 py-4 px-6 font-semibold text-slate-600 hover:text-blue-600 transition">
+                <span id="history-count" class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">0</span>
             </button>
         </div>
+    </div>
 
-        <!-- HISTORY TAB -->
-        <div id="history-view" class="hidden bg-white rounded-b-2xl p-6 shadow-lg border border-slate-200">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-800">📚 Histórico de Simulados</h2>
-                <div class="space-x-2">
-                    <button onclick="exportHistory()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                        📥 Exportar
-                    </button>
-                    <button onclick="clearHistory()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                        🗑️ Limpar Tudo
-                    </button>
-                </div>
-            </div>
-            
-            <div id="history-container" class="space-y-4 max-h-96 overflow-y-auto">
-                <div id="no-history" class="text-center py-12 text-slate-500">
-                    <div class="text-6xl mb-4">📝</div>
-                    <p class="text-lg">Nenhum simulado no histórico ainda.</p>
-                    <p class="text-sm">Complete um simulado para começar a guardar seus resultados!</p>
-                </div>
+    <!-- INPUT TAB -->
+    <div id="input-view" class="bg-white rounded-b-2xl p-6 shadow-lg border border-slate-200 space-y-6">
+        <div>
+            <label class="font-bold text-slate-700 flex justify-between mb-2">
+                <span id="prompt-label"></span>
+                <button id="prompt-copy" onclick="copyPrompt()"
+                        class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100">
+                </button>
+            </label>
+            <pre class="prompt-box p-4 rounded-lg border border-slate-600" id="prompt-text"></pre>
+        </div>
+
+        <div>
+            <label id="step-2-label" class="block font-bold text-slate-700 mb-2"></label>
+            <textarea id="ai-input" rows="10"
+                      class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 transition font-mono text-sm"
+                      placeholder=""></textarea>
+        </div>
+
+        <button id="btn-generate"
+                class="w-full bg-blue-700 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-800 transition shadow-lg">
+        </button>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="history-view" class="hidden bg-white rounded-b-2xl p-6 shadow-lg border border-slate-200">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-slate-800" id="history-title"></h2>
+            <div class="space-x-2">
+                <button onclick="exportHistory()"
+                        id="btn-history-export"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                </button>
+                <button onclick="clearHistory()"
+                        id="btn-history-clear"
+                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                </button>
             </div>
         </div>
 
-        <!-- QUIZ -->
-        <div id="quiz-view" class="hidden space-y-8">
-            <div class="flex justify-between items-center pb-4 border-b border-slate-200">
-                <h2 class="text-2xl font-bold text-slate-800">Simulado</h2>
-                <div class="space-x-2">
-                    <button id="btn-save-quiz" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
-                        💾 Salvar
-                    </button>
-                    <button onclick="resetAndGoHome()" class="text-sm text-red-600 font-semibold hover:bg-red-50 px-3 py-1 rounded">Reiniciar</button>
-                </div>
-            </div>
-            <div id="questions-container" class="space-y-8"></div>
-            <div id="action-area" class="text-center py-6">
-                <button id="btn-check" class="bg-green-600 text-white font-bold py-3 px-12 rounded-xl hover:bg-green-700 shadow-lg text-lg">Corrigir</button>
-            </div>
-            <div id="results-area" class="hidden bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-500 text-center fade-in">
-                <div id="score-display"></div>
-                <div class="mt-6 flex justify-center space-x-4">
-                    <button onclick="resetAndGoHome()" class="bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-200">Novo</button>
-                    <button id="btn-save-completed" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700">💾 Salvar no Histórico</button>
-                </div>
+        <div id="history-container" class="space-y-4 max-h-96 overflow-y-auto">
+            <div id="no-history" class="text-center py-12 text-slate-500">
+                <div class="text-6xl mb-4" id="no-history-icon"></div>
+                <p class="text-lg" id="no-history-text-1"></p>
+                <p class="text-sm" id="no-history-text-2"></p>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- ENGINE 10.0: ISOLAMENTO DE CONTEXTO ---
+    <!-- QUIZ -->
+    <div id="quiz-view" class="hidden space-y-8">
+        <div class="flex justify-between items-center pb-4 border-b border-slate-200">
+            <h2 id="quiz-title" class="text-2xl font-bold text-slate-800"></h2>
+            <div class="space-x-2">
+                <button id="btn-save-quiz"
+                        class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"></button>
+                <button onclick="resetAndGoHome()"
+                        id="btn-reset"
+                        class="text-sm text-red-600 font-semibold hover:bg-red-50 px-3 py-1 rounded"></button>
+            </div>
+        </div>
+        <div id="questions-container" class="space-y-8"></div>
+        <div id="action-area" class="text-center py-6">
+            <button id="btn-check"
+                    class="bg-green-600 text-white font-bold py-3 px-12 rounded-xl hover:bg-green-700 shadow-lg text-lg"></button>
+        </div>
+        <div id="results-area"
+             class="hidden bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-500 text-center fade-in">
+            <div id="score-display"></div>
+            <div class="mt-6 flex justify-center space-x-4">
+                <button onclick="resetAndGoHome()"
+                        id="btn-new-quiz"
+                        class="bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-200"></button>
+                <button id="btn-save-completed"
+                        class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700"></button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        function normalizeText(text) {
-            let clean = text;
-            
-            // 1. Protege R$ para o MathJax não quebrar
-            clean = clean.replace(/R\$/g, 'R\\$');
-
-            // 2. Normaliza os separadores de bloco
-            // Transforma "---" ou "**Questão X" em um separador único "___BLOCK___"
-            clean = clean.replace(/\n\s*_{3,}\s*\n/g, '\n___BLOCK___\n');
-            clean = clean.replace(/\n\s*-{3,}\s*\n/g, '\n___BLOCK___\n');
-            // Insere quebra antes de "Questão X" caso não tenha separador
-            clean = clean.replace(/(?:\n|^)\s*\**Quest[ãa]o\s*\d+/gi, match => '\n___BLOCK___\n' + match);
-
-            // 3. Limpa Markdown Bold dos Títulos (ex: **Questão 1**) para texto puro
-            clean = clean.replace(/\*\*(Quest[ãa]o \d+.*?)\*\*/gi, '$1');
-
-            return clean;
-        }
-
-        function parseBlock(rawBlock, index) {
-            let block = rawBlock.trim();
-            if (block.length < 10) return null;
-
-            // --- FASE 1: ISOLAMENTO (A Chave da Solução) ---
-            // Dividimos o texto em duas partes: "Problema" (Enunciado+Opções) e "Solução" (Gabarito+Justificativa)
-            // Isso impede que "A)" dentro da justificativa seja lido como opção.
-
-            // Procura onde começa a resposta ou justificativa
-            const splitRegex = /(?:\n|^)\s*(?:✅|Gabarito:|Resposta:|Letra Correta|💡|Justificativa:)/i;
-            const splitMatch = block.match(splitRegex);
-
-            let problemPart = block;
-            let solutionPart = "";
-
-            if (splitMatch) {
-                problemPart = block.substring(0, splitMatch.index).trim();
-                solutionPart = block.substring(splitMatch.index).trim();
-            }
-
-            // --- FASE 2: EXTRAÇÃO DO PROBLEMA ---
-            let questionText = "";
-            let options = [];
-
-            // Regex para encontrar opções (A), a., (A)) APENAS na parte do problema
-            const optionRegex = /(?:^|\n)\s*([A-Ea-e])[\)\.\-]\s+([\s\S]+?)(?=(?:\n\s*[A-Ea-e][\)\.\-]|$))/g;
-            
-            let match;
-            let optionsStartIndex = problemPart.length;
-
-            while ((match = optionRegex.exec(problemPart)) !== null) {
-                if (match.index < optionsStartIndex) optionsStartIndex = match.index;
-                options.push({
-                    id: match[1].toLowerCase(),
-                    text: match[2].trim()
-                });
-            }
-
-            // O que vem antes das opções é o Enunciado
-            questionText = problemPart.substring(0, optionsStartIndex).trim();
-            // Limpa prefixos comuns
-            questionText = questionText.replace(/^(?:Questão\s+\d+|Question\s+\d+|\d+)[\.:\)]\s*/i, '');
-            questionText = questionText.replace(/^\**\s*/, ''); // Remove asteriscos soltos no inicio
-
-            // --- FASE 3: EXTRAÇÃO DA SOLUÇÃO ---
-            let correctAnswer = "";
-            let justification = "";
-
-            // Extrair Letra Correta (Procura na solutionPart)
-            // Aceita formatos sujos como "✅ **Letra Correta: A**"
-            const answerMatch = solutionPart.match(/(?:✅|Gabarito|Resposta|Letra).*?([A-Ea-e])\b/i);
-            if (answerMatch) correctAnswer = answerMatch[1].toLowerCase();
-
-            // Extrair Justificativa (Procura na solutionPart)
-            const justMatch = solutionPart.match(/(?:💡|Justificativa:|Explicação:|Comentário:)([\s\S]*)/i);
-            if (justMatch) {
-                justification = justMatch[1].trim();
-                // Remove formatação markdown básica da justificativa
-                justification = justification.replace(/\*\*/g, ''); 
-            }
-
-            if (options.length < 2) return null;
-
-            return {
-                id: index,
-                question: questionText,
-                options: options,
-                correctAnswer: correctAnswer,
-                justification: justification
-            };
-        }
-
-        // --- HISTÓRICO SYSTEM ---
-        
-        const HistoryManager = {
-            // Chave para localStorage
-            STORAGE_KEY: 'simulai_history',
-            
-            // Carregar histórico do localStorage
-            load: function() {
-                try {
-                    const history = localStorage.getItem(this.STORAGE_KEY);
-                    return history ? JSON.parse(history) : [];
-                } catch (error) {
-                    console.error('Erro ao carregar histórico:', error);
-                    return [];
-                }
-            },
-            
-            // Salvar simulado no histórico
-            save: function(quizData, score, userAnswers, rawInput) {
-                const history = this.load();
-                
-                const simulado = {
-                    id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-                    timestamp: new Date().toISOString(),
-                    date: new Date().toLocaleDateString('pt-BR'),
-                    time: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}),
-                    score: score,
-                    totalQuestions: quizData.length,
-                    percentage: Math.round((score / quizData.length) * 100),
-                    questions: quizData,
-                    userAnswers: userAnswers,
-                    rawInput: rawInput,
-                    theme: this.extractTheme(rawInput)
-                };
-                
-                history.unshift(simulado); // Adiciona no início
-                
-                // Manter apenas os últimos 50 simulados
-                if (history.length > 50) {
-                    history.splice(50);
-                }
-                
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(history));
-                this.updateHistoryCount();
-                return simulado;
-            },
-            
-            // Deletar simulado específico
-            delete: function(id) {
-                const history = this.load();
-                const newHistory = history.filter(item => item.id !== id);
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newHistory));
-                this.updateHistoryCount();
-            },
-            
-            // Limpar todo o histórico
-            clear: function() {
-                localStorage.removeItem(this.STORAGE_KEY);
-                this.updateHistoryCount();
-            },
-            
-            // Exportar histórico para arquivo JSON
-            export: function() {
-                const history = this.load();
-                const dataStr = JSON.stringify(history, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(dataBlob);
-                link.download = `simulai_historico_${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-            },
-            
-            // Extrair tema do input original
-            extractTheme: function(rawInput) {
-                const lines = rawInput.split('\n').slice(0, 5);
-                for (let line of lines) {
-                    if (line.toLowerCase().includes('questão')) {
-                        const match = line.match(/\[[^\]]+\]/);
-                        if (match) return match[0].replace(/[\[\]]/g, '');
-                    }
-                }
-                return 'Tema não identificado';
-            },
-            
-            // Atualizar contador na aba
-            updateHistoryCount: function() {
-                const history = this.load();
-                document.getElementById('history-count').textContent = history.length;
-            },
-            
-            // Carregar e exibir histórico
-            render: function() {
-                const history = this.load();
-                const container = document.getElementById('history-container');
-                const noHistory = document.getElementById('no-history');
-                
-                if (history.length === 0) {
-                    container.innerHTML = '';
-                    noHistory.style.display = 'block';
-                    return;
-                }
-                
-                noHistory.style.display = 'none';
-                
-                container.innerHTML = history.map(item => `
-                    <div class="history-item bg-white p-4 rounded-lg border border-slate-200 hover:shadow-md" data-id="${item.id}">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 class="font-bold text-slate-800">${item.theme}</h3>
-                                <p class="text-sm text-slate-500">${item.date} às ${item.time}</p>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="text-right">
-                                    <div class="text-2xl font-bold ${item.percentage >= 70 ? 'text-green-600' : item.percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${item.percentage}%</div>
-                                    <div class="text-xs text-slate-500">${item.score}/${item.totalQuestions}</div>
-                                </div>
-                                <button onclick="deleteHistoryItem('${item.id}', this)" class="text-red-500 hover:text-red-700 ml-2" title="Deletar">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="flex space-x-2">
-                            <button onclick="loadHistoryQuiz('${item.id}')" class="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition">
-                                🔄 Repetir
-                            </button>
-                            <button onclick="viewHistoryDetails('${item.id}')" class="flex-1 bg-slate-100 text-slate-700 py-2 px-3 rounded text-sm hover:bg-slate-200 transition">
-                                👁️ Detalhes
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        };
-
-        // Carregar simulado do histórico
-        function loadHistoryQuiz(id) {
-            const history = HistoryManager.load();
-            const item = history.find(h => h.id === id);
-            
-            if (item) {
-                quizData = item.questions;
-                switchTab('create'); // Voltar para a aba de criação
-                
-                setTimeout(() => {
-                    renderQuiz();
-                    // Aplicar respostas do histórico
-                    Object.entries(item.userAnswers).forEach(([questionId, answer]) => {
-                        const input = document.querySelector(`input[name="q-${questionId}"][value="${answer}"]`);
-                        if (input) input.checked = true;
-                    });
-                }, 100);
-            }
-        }
-
-        // Ver detalhes do histórico
-        function viewHistoryDetails(id) {
-            const history = HistoryManager.load();
-            const item = history.find(h => h.id === id);
-            
-            if (item) {
-                const details = `
-📊 DETALHES DO SIMULADO
-
-🎯 Tema: ${item.theme}
-📅 Data: ${item.date} às ${item.time}
-📈 Resultado: ${item.score}/${item.totalQuestions} questões (${item.percentage}%)
-
-❓ QUESTÕES E RESPOSTAS:
-
-${item.questions.map((q, idx) => `
-${idx + 1}. ${q.question}
-
-Suas opções: ${item.userAnswers[q.id] ? item.userAnswers[q.id].toUpperCase() : 'Não respondida'}
-Gabarito: ${q.correctAnswer.toUpperCase()}
-${item.userAnswers[q.id] === q.correctAnswer ? '✅ Correta' : '❌ Errada'}
-
-${q.justification ? `💡 Justificativa: ${q.justification}` : ''}
-`).join('\n' + '-'.repeat(50) + '\n')}
-                `;
-                
-                alert(details);
-            }
-        }
-
-        // --- UI ---
-
-        const ui = {
-            input: document.getElementById('ai-input'),
-            views: {
-                input: document.getElementById('input-view'),
-                history: document.getElementById('history-view'),
-                quiz: document.getElementById('quiz-view'),
-                results: document.getElementById('results-area'),
-                actions: document.getElementById('action-area')
-            },
-            container: document.getElementById('questions-container'),
-            score: document.getElementById('score-display')
-        };
-
-        let quizData = [];
-        let userAnswers = {};
-
-        // Trocar entre abas
-        function switchTab(tab) {
-            // Atualizar botões das abas
-            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
-                btn.classList.remove('tab-active');
-            });
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            
-            // Limpar estado do quiz se estiver navegando
-            if (tab !== 'quiz') {
-                quizData = [];
-                userAnswers = {};
-                ui.views.quiz.classList.add('hidden');
-                ui.views.results.classList.add('hidden');
-                ui.views.actions.classList.add('hidden');
-            }
-            
-            // Mostrar/ocultar views
-            if (tab === 'create') {
-                ui.views.input.classList.remove('hidden');
-                ui.views.history.classList.add('hidden');
-            } else if (tab === 'history') {
-                ui.views.input.classList.add('hidden');
-                ui.views.history.classList.remove('hidden');
-                HistoryManager.render();
-            }
-        }
-
-        document.getElementById('btn-generate').addEventListener('click', () => {
-            const raw = ui.input.value;
-            if (!raw.trim()) return alert("Cole o texto primeiro!");
-
-            // Limpar estado anterior
-            quizData = [];
-            userAnswers = {};
-            ui.container.innerHTML = '';
-            ui.views.quiz.classList.add('hidden');
-            ui.views.results.classList.add('hidden');
-            ui.views.actions.classList.add('hidden');
-
-            const normalized = normalizeText(raw);
-            // Divide pelos blocos que criamos na normalização
-            const blocks = normalized.split('___BLOCK___').filter(b => b.trim().length > 20);
-            
-            quizData = blocks.map((b, i) => parseBlock(b, i)).filter(q => q !== null);
-            userAnswers = {}; // Reset respostas
-
-            if (quizData.length === 0) {
-                alert("Não consegui identificar as questões. Verifique se copiou o texto completo.");
-                return;
-            }
-
-            renderQuiz();
-        });
-
-        function renderQuiz() {
-            // Limpar container primeiro
-            ui.container.innerHTML = '';
-            
-            ui.container.innerHTML = quizData.map((q, idx) => `
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 fade-in">
-                    <div class="flex gap-4 mb-4">
-                        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-800 font-bold rounded-full flex items-center justify-center text-sm">
-                            ${idx + 1}
-                        </div>
-                        <div class="text-lg text-slate-800 font-medium w-full leading-relaxed">
-                            ${q.question.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-2 ml-0 md:ml-12">
-                        ${q.options.map(opt => `
-                            <label class="flex items-start p-3 rounded-lg border border-slate-200 hover:bg-blue-50 cursor-pointer transition group select-none">
-                                <input type="radio" name="q-${q.id}" value="${opt.id}" class="mt-1 mr-3 accent-blue-600 w-4 h-4" onchange="userAnswers[${q.id}] = '${opt.id}'">
-                                <span class="text-slate-700 group-hover:text-slate-900">${opt.text}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <div id="feedback-${q.id}" class="hidden mt-6 ml-0 md:ml-12 p-4 rounded-lg bg-slate-50 border-l-4 border-slate-300">
-                        <p class="status-msg font-bold text-lg mb-1"></p>
-                        <div class="text-slate-700 text-sm leading-relaxed">
-                            <strong class="text-slate-900">💡 Explicação:</strong><br>
-                            ${q.justification || "Sem justificativa disponível."}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            ui.views.input.classList.add('hidden');
-            ui.views.history.classList.add('hidden');
-            ui.views.quiz.classList.remove('hidden');
-            ui.views.results.classList.add('hidden');
-            ui.views.actions.classList.remove('hidden');
-            
-            window.scrollTo(0,0);
-            if(window.MathJax) MathJax.typesetPromise();
-        }
-
-        // Botão salvar simulado
-        document.getElementById('btn-save-quiz').addEventListener('click', () => {
-            if (quizData.length === 0) return;
-            
-            const saved = HistoryManager.save(quizData, 0, userAnswers, ui.input.value);
-            alert(`Simulado salvo no histórico! ID: ${saved.id}`);
-        });
-
-        // Botão salvar simulado completado
-        document.getElementById('btn-save-completed').addEventListener('click', () => {
-            if (quizData.length === 0) return;
-            
-            // Calcular score final baseado nas respostas salvas
-            let score = 0;
-            quizData.forEach(q => {
-                if (userAnswers[q.id] === q.correctAnswer) {
-                    score++;
-                }
-            });
-            
-            const saved = HistoryManager.save(quizData, score, userAnswers, ui.input.value);
-            alert(`Simulado salvo no histórico com ${saved.percentage}%!`);
-        });
-
-        document.getElementById('btn-check').addEventListener('click', () => {
-            let score = 0;
-            quizData.forEach(q => {
-                const selected = document.querySelector(`input[name="q-${q.id}"]:checked`);
-                const fb = document.getElementById(`feedback-${q.id}`);
-                const status = fb.querySelector('.status-msg');
-                const inputs = document.querySelectorAll(`input[name="q-${q.id}"]`);
-
-                inputs.forEach(i => i.disabled = true);
-                fb.classList.remove('hidden');
-
-                const isCorrect = selected && selected.value === q.correctAnswer;
-                if (isCorrect) {
-                    score++;
-                    fb.className = "mt-6 ml-0 md:ml-12 p-4 rounded-lg bg-green-50 border-l-4 border-green-500 fade-in";
-                    status.innerHTML = `<span class="text-green-700">✅ Correto!</span>`;
-                    selected.parentElement.classList.add('ring-2', 'ring-green-500', 'bg-green-100', 'border-green-500');
-                } else {
-                    fb.className = "mt-6 ml-0 md:ml-12 p-4 rounded-lg bg-red-50 border-l-4 border-red-500 fade-in";
-                    const gab = q.correctAnswer ? q.correctAnswer.toUpperCase() : '?';
-                    status.innerHTML = `<span class="text-red-700">❌ Errado. Resposta: <strong>${gab}</strong></span>`;
-                    if (selected) selected.parentElement.classList.add('bg-red-100', 'border-red-300');
-                    
-                    if (q.correctAnswer) {
-                        const correct = document.querySelector(`input[name="q-${q.id}"][value="${q.correctAnswer}"]`);
-                        if (correct) correct.parentElement.classList.add('bg-green-100', 'border-green-500', 'font-bold');
-                    }
-                }
-            });
-
-            const pct = Math.round((score / quizData.length) * 100);
-            ui.score.innerHTML = `
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Resultado</p>
-                <div class="text-5xl font-black text-blue-600 my-3">${pct}%</div>
-                <p class="text-slate-700">Você acertou <strong>${score}</strong> de <strong>${quizData.length}</strong> questões.</p>
-                <div class="mt-4 text-sm text-slate-500">
-                    💾 Clique em "Salvar no Histórico" para guardar este resultado!
-                </div>
-            `;
-            ui.views.results.classList.remove('hidden');
-            ui.views.actions.classList.add('hidden');
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        });
-
-        // Funções do histórico
-        function exportHistory() {
-            HistoryManager.export();
-        }
-
-        function clearHistory() {
-            if (confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.')) {
-                HistoryManager.clear();
-                HistoryManager.render();
-                alert('Histórico limpo com sucesso!');
-            }
-        }
-
-        // Deletar item específico do histórico
-        function deleteHistoryItem(id, buttonElement) {
-            if (confirm('Tem certeza que deseja deletar este simulado do histórico?')) {
-                HistoryManager.delete(id);
-                // Remove o elemento visualmente
-                const historyItem = buttonElement.closest('.history-item');
-                if (historyItem) {
-                    historyItem.remove();
-                }
-                // Atualiza contador
-                HistoryManager.updateHistoryCount();
-                // Se não há mais itens, mostra a mensagem de "nenhum histórico"
-                if (HistoryManager.load().length === 0) {
-                    HistoryManager.render();
-                }
-            }
-        }
-
-        // Reset e voltar para aba inicial
-        function resetAndGoHome() {
-            quizData = [];
-            userAnswers = {};
-            ui.container.innerHTML = '';
-            ui.views.quiz.classList.add('hidden');
-            ui.views.results.classList.add('hidden');
-            ui.views.actions.classList.add('hidden');
-            switchTab('create');
-        }
-
-        window.copyPrompt = function() {
-            navigator.clipboard.writeText(document.getElementById('prompt-text').innerText);
-            alert("Prompt copiado!");
-        };
-
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            HistoryManager.updateHistoryCount();
-        });
-    </script>
 </body>
 </html>
