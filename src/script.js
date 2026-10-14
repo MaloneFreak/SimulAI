@@ -164,7 +164,7 @@ const HistoryManager = {
         }
     },
 
-    save: function (quizData, score, userAnswers, rawInput) {
+    save: function (quizData, score, userAnswers, rawInput, theme = this.extractTheme(rawInput)) {
         console.log(getDynamicText('log_save_history'));
         const history = this.load();
 
@@ -179,7 +179,7 @@ const HistoryManager = {
             questions: quizData,
             userAnswers: userAnswers,
             rawInput: rawInput,
-            theme: this.extractTheme(rawInput)
+            theme: theme
         };
 
         history.unshift(simulado);
@@ -219,14 +219,37 @@ const HistoryManager = {
     },
 
     extractTheme: function (rawInput) {
-        const lines = rawInput.split('\n').slice(0, 5);
-        for (let line of lines) {
-            if (line.toLowerCase().includes(getDynamicText('quiz_question_identifier').toLowerCase())) {
-                const match = line.match(/\[[^\]]+\]/);
-                if (match) return match[0].replace(/[\[\]]/g, '');
+        // Only the text before the first question can name the topic.
+        const text = rawInput.replace(/\r/g, '').replace(/\*\*/g, '');
+        const firstQuestion = text.search(getLanguageContent("regexPatterns"));
+        const intro = (firstQuestion === -1 ? text : text.slice(0, firstQuestion))
+            .split('\n')
+            .map(line => line.replace(/^[\s#>*•-]+/, '').trim())
+            .filter(line => line.length > 0)
+            .slice(0, 5);
+
+        // 1st: the "Theme: ..." line the prompt asks for. 2nd: "... questions about <topic>"
+        // (a sentence, so it is cut where the topic ends: ":", ";", dash or "(").
+        const attempts = [[getLanguageContent("themeRegex"), false], [getLanguageContent("themeAboutRegex"), true]];
+        for (const [regex, isSentence] of attempts) {
+            for (const line of intro) {
+                const match = line.match(regex);
+                const theme = match && this.cleanTheme(match[1], isSentence);
+                if (theme) return theme;
             }
         }
         return getDynamicText('history_theme_unknown');
+    },
+
+    cleanTheme: function (value, isSentence) {
+        let theme = isSentence ? value.split(/[:;—–(]/)[0] : value;
+        theme = theme
+            .replace(/\s+/g, ' ')
+            .replace(/[\s.,!?…]+$/, '')
+            .replace(/^[\s_*\[<"“'`]+|[\s_*\]>"”'`]+$/g, '')
+            .replace(/[\s.,!?…]+$/, '');
+        if (theme.length > 60) theme = theme.slice(0, 57).trimEnd() + '…';
+        return theme;
     },
 
     updateHistoryCount: function () {
@@ -285,6 +308,8 @@ function loadHistoryQuiz(id) {
         switchTab('create');
         quizData = item.questions;
         userAnswers = {};
+        currentRawInput = item.rawInput;
+        currentTheme = item.theme;
         renderQuiz();
     }
 }
@@ -333,6 +358,8 @@ const ui = {
 
 let quizData = [];
 let userAnswers = {};
+let currentRawInput = '';
+let currentTheme = '';
 
 function switchTab(tab) {
     document.querySelectorAll('[id^="tab-"]').forEach(btn => {
@@ -374,6 +401,8 @@ document.getElementById('btn-generate').addEventListener('click', () => {
 
     quizData = blocks.map((b, i) => parseBlock(b, i)).filter(q => q !== null);
     userAnswers = {};
+    currentRawInput = raw;
+    currentTheme = HistoryManager.extractTheme(raw);
 
     if (quizData.length === 0) {
         alert(getLanguageContent("alerts").no_questions);
@@ -429,7 +458,7 @@ function renderQuiz() {
 document.getElementById('btn-save-quiz').addEventListener('click', () => {
     if (quizData.length === 0) return;
 
-    const saved = HistoryManager.save(quizData, 0, userAnswers, ui.input.value);
+    const saved = HistoryManager.save(quizData, 0, userAnswers, currentRawInput, currentTheme);
     alert(getDynamicText('history_saved').replace("{id}", saved.id));
 });
 
@@ -443,7 +472,7 @@ document.getElementById('btn-save-completed').addEventListener('click', () => {
         }
     });
 
-    const saved = HistoryManager.save(quizData, score, userAnswers, ui.input.value);
+    const saved = HistoryManager.save(quizData, score, userAnswers, currentRawInput, currentTheme);
     alert(getDynamicText('history_saved_completed').replace("{percentage}", saved.percentage));
 });
 

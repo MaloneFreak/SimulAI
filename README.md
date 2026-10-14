@@ -66,6 +66,7 @@ Pick your language in the dropdown (top left). The prompt box shows the prompt f
 
 ```text
 Create 5 questions about [TOPIC].
+Start with one line in the form "Theme: <short topic name>".
 Format for EACH question:
 
 Question 1: [Statement]
@@ -83,6 +84,7 @@ D) [Text]
 
 ```text
 Crie 5 questões sobre [TEMA].
+Comece com uma linha no formato "Tema: <nome curto do tema>".
 Formato para CADA questão:
 
 Questão 1: [Enunciado]
@@ -97,6 +99,7 @@ D) [Texto]
 
 ```text
 Erstelle 5 Fragen zu [THEMA].
+Beginne mit einer Zeile im Format "Thema: <kurzer Themenname>".
 Format für JEDE Frage:
 
 Frage 1: [Aussage]
@@ -137,6 +140,8 @@ SimulAI looks for these markers. The ✅ and 💡 emojis work in every language,
 
 Options can use the letters A to E, written as `A)`, `A.` or `A-`. Questions are separated by a line with `---` (or `___`) or by the next question title.
 
+**Topic of a simulation.** The History uses it as the title. SimulAI reads the `Theme:` line (`Tema:` / `Thema:`) that the prompt asks the AI to write at the top. If there is none, it falls back to a sentence like "5 questions about *topic*" before the first question. If neither is found, the title is "Topic not identified" (SimulAI prefers that over guessing a wrong topic).
+
 > If a response doesn't parse correctly, select the same language you used in the prompt and make sure the ✅ and 💡 lines are present.
 
 ## 🗂️ Project Structure
@@ -169,7 +174,7 @@ If you change the structure of `SimulAI.html`, the script stops with a clear err
 ## 🌐 Adding a language
 
 1. In `src/languages.js`, copy the `en-EN` block in **both** `content` and `contentDynamic`, rename it to your locale (for example `es-ES`) and translate it.
-2. Keep the regular expressions (`regexPatterns`, `regexPatterns2`, `splitPatterns`, `optionRegex`, `questionRegex`, `answerRegex`, `justificationRegex`) in sync with the words used in your translated `prompt_text`, so the parser recognizes what the AI will write.
+2. Keep the regular expressions (`regexPatterns`, `regexPatterns2`, `splitPatterns`, `optionRegex`, `questionRegex`, `answerRegex`, `justificationRegex`, `themeRegex`, `themeAboutRegex`) in sync with the words used in your translated `prompt_text`, so the parser recognizes what the AI will write.
 3. Add `<option value="es-ES">ES</option>` to the `#language-selector` in `SimulAI.html`.
 
 ## 💻 Technologies Used

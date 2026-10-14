@@ -44,6 +44,7 @@ let content = {
         "step_1": "1. Prompt (Copie e cole na IA)",
         "copy_prompt": "Copiar",
         "prompt_text": "Crie 5 questões sobre [TEMA].\n" +
+            "Comece com uma linha no formato \"Tema: <nome curto do tema>\".\n" +
             "Formato para CADA questão:\n" +
             "\n" +
             "Questão 1: [Enunciado]\n" +
@@ -83,6 +84,8 @@ let content = {
         "questionRegex": /^(?:Questão\s+\d+|Question\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Gabarito|Resposta|Letra).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Justificativa:|Explicação:|Comentário:)([\s\S]*)/i,
+        "themeRegex": /^(?:Tema|Assunto|Tópico|Topico)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:quest(?:ões|oes|ão|ao)|simulado|prova|perguntas?)\s+(?:sobre|a respeito de|acerca de)\s+(.+)$/i,
 
 
         "download_prefix": "simulai_historico_",
@@ -104,6 +107,7 @@ let content = {
         "step_1": "1. Prompt (Copy and paste into the AI)",
         "copy_prompt": "Copy",
         "prompt_text": "Create 5 questions about [TOPIC].\n" +
+            "Start with one line in the form \"Theme: <short topic name>\".\n" +
             "Format for EACH question:\n" +
             "\n" +
             "Question 1: [Statement]\n" +
@@ -143,6 +147,8 @@ let content = {
         "questionRegex": /^(?:Question\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Answer|Correct Option|Option).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Explanation:|Comment:)([\s\S]*)/i,
+        "themeRegex": /^(?:Theme|Topic|Subject)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:questions?|quiz|test|exam)\s+(?:about|regarding|covering|on the topic of|on)\s+(.+)$/i,
 
         "download_prefix": "simulai_history_",
         "alerts": {
@@ -165,6 +171,7 @@ let content = {
         "step_1": "1. Prompt (Kopieren und in die KI einfügen)",
         "copy_prompt": "Kopieren",
         "prompt_text": "Erstelle 5 Fragen zu [THEMA].\n" +
+            "Beginne mit einer Zeile im Format \"Thema: <kurzer Themenname>\".\n" +
             "Format für JEDE Frage:\n" +
             "\n" +
             "Frage 1: [Aussage]\n" +
@@ -203,6 +210,8 @@ let content = {
         "questionRegex": /^(?:Frage\s+\d+|\d+)[\.:\)]\s*/i,
         "answerRegex": /(?:✅|Antwort|Richtige Antwort|Option).*?([A-Ea-e])\b/i,
         "justificationRegex": /(?:💡|Begründung:|Kommentar:)([\s\S]*)/i,
+        "themeRegex": /^(?:Thema|Themengebiet|Fachgebiet)\s*[:：]\s*(.+)$/i,
+        "themeAboutRegex": /\b(?:Fragen?|Quiz|Test|Prüfung)\s+(?:zu|zum|zur|über|rund um)\s+(.+)$/i,
 
         "download_prefix": "simulai_verlauf_",
         "alerts": {
