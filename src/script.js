@@ -15,51 +15,6 @@ function normalizeText(text) {
 }
 
 function parseBlock(rawBlock, index) {
-    console.log(getDynamicText('log_parse_block').replace("{index}", index));
-    let block = rawBlock.trim();
-    if (block.length < 10) return null;
-
-    let splitRegex = getLanguageContent("splitPatterns");
-    let splitMatch = block.match(splitRegex);
-
-    let problemPart = block;
-    let solutionPart = "";
-
-    if (splitMatch) {
-        problemPart = block.substring(0, splitMatch.index).trim();
-        solutionPart = block.substring(splitMatch.index).trim();
-    }
-
-    console.log(getDynamicText('log_parse_question'));
-    let questionText = "";
-    let options = [];
-    const optionRegex = getLanguageContent("optionRegex");
-    let match;
-    let optionsStartIndex = problemPart.length;
-
-    while ((match = optionRegex.exec(problemPart)) !== null) {
-        if (match.index < optionsStartIndex) optionsStartIndex = match.index;
-        options.push({id: match[1].toLowerCase(), text: match[2].trim()});
-    }
-
-    questionText = problemPart.substring(0, optionsStartIndex).trim();
-    questionText = questionText.replace(getLanguageContent("questionRegex"), '');
-    questionText = questionText.replace(/^\**\s*/, '');
-
-    console.log(getDynamicText('log_parse_solution'));
-    let correctAnswer = "";
-    let justification = "";
-    const answerMatch = solutionPart.match(getLanguageContent("answerRegex"));
-    if (answerMatch) correctAnswer = answerMatch[1].toLowerCase();
-    const justMatch = solutionPart.match(getLanguageContent("justificationRegex"));
-    if (justMatch) justification = justMatch[1].trim().replace(/\*\*/g, '');
-
-    if (options.length < 2) return null;
-
-    return {id: index, question: questionText, options, correctAnswer, justification};
-}
-
-function parseBlock(rawBlock, index) {
     let block = rawBlock.trim();
     if (block.length < 10) return null;
 
