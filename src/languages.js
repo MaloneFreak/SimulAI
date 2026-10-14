@@ -361,4 +361,6 @@ function updateTexts() {
     document.querySelector("#btn-save-completed").textContent = `💾 ${getLanguageContent("save_completed")}`;
     document.querySelector("#btn-reset").textContent = getLanguageContent("reset");
     document.querySelector("#btn-new-quiz").textContent = getLanguageContent("new");
+
+    HistoryManager.updateHistoryCount();
 }
