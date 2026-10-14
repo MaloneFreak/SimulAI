@@ -4,7 +4,7 @@
 
 🌍 **English · Português (BR) · Deutsch** &nbsp;|&nbsp; 🔒 **Offline & private** &nbsp;|&nbsp; 🧮 **LaTeX support**
 
-**[⬇️ Download the latest version](https://github.com/MaloneFreak/SimulAI/releases/latest/download/SimulAI-standalone.html)** (a single HTML file, no installation) &nbsp;·&nbsp; [All releases](https://github.com/MaloneFreak/SimulAI/releases)
+**[⬇️ Download the latest version](https://github.com/MaloneFreak/SimulAI/releases/latest/download/SimulAI.html)** (a single HTML file, no installation) &nbsp;·&nbsp; [All releases](https://github.com/MaloneFreak/SimulAI/releases)
 
 ## About the Project
 
@@ -34,7 +34,7 @@ Ask any AI (ChatGPT, Gemini, Claude, DeepSeek...) for questions on a topic, copy
 
 ### Option A: single file (recommended)
 
-1. Download **`SimulAI-standalone.html`** from the [latest release](https://github.com/MaloneFreak/SimulAI/releases/latest).
+1. Download **`SimulAI.html`** from the [latest release](https://github.com/MaloneFreak/SimulAI/releases/latest).
 2. Open it in any modern browser (Chrome, Edge, Firefox, Safari). That's it, it works without an internet connection.
 
 > **Your data stays in your browser.** The history is saved in the browser's LocalStorage, so it is tied to that browser (and possibly to the file's location). Use **History → Export** from time to time to keep a backup.
@@ -166,7 +166,7 @@ The release asset is generated from the source with a small Node.js script (test
 cd tools
 npm install
 npm run build
-# Output: dist/SimulAI-standalone.html
+# Output: dist/SimulAI.html
 ```
 
 If you change the structure of `SimulAI.html`, the script stops with a clear error telling you what to update.
